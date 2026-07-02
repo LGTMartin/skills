@@ -1,0 +1,32 @@
+name: Sync fork with upstream
+
+# Keeps this fork's main current with mattpocock/skills every morning.
+# Runs on GitHub's servers, so it fires even when your machine is off.
+# Note: cron is UTC — 06:00 UTC. Adjust the value below for your timezone.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge upstream/main into main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/mattpocock/skills.git
+          git fetch upstream
+          # Merge (not fast-forward-only) so this workflow file, which upstream
+          # does not have, is preserved while upstream changes are pulled in.
+          git merge upstream/main --no-edit
+          git push origin main
